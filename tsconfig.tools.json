@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist/tools"
+  },
+  "include": ["test", "vitest.config.ts"],
+  // `apps/server` entra como referência porque `test/setup-env.ts` importa a guarda de
+  // banco de teste e o `closeTestDb` de `apps/server/test/helpers/db.ts` — a mesma
+  // implementação que o `resetDb` usa, em vez de uma segunda cópia da regra aqui.
+  "references": [{ "path": "./packages/contracts" }, { "path": "./apps/server" }]
+}

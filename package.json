@@ -1,0 +1,37 @@
+{
+  "name": "zapresponse",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "check": "tsc -b",
+    "lint": "eslint .",
+    "pretest": "tsc -b packages/contracts",
+    "test": "vitest run",
+    "build": "tsc -b --force",
+    "db:generate": "tsc -b packages/contracts && npm run db:generate -w @zapresponse/server",
+    "db:migrate": "tsc -b packages/contracts && npm run db:migrate -w @zapresponse/server",
+    "db:seed": "tsc -b packages/contracts && npm run db:seed -w @zapresponse/server",
+    "dev:server": "tsc -b packages/contracts && npm run dev -w @zapresponse/server"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.6.5",
+    "dotenv": "18.0.9",
+    "eslint": "10.13.0",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.13.0",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.0",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
+  }
+}

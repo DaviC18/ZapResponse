@@ -1,0 +1,24 @@
+# Backlog — fora do escopo congelado
+
+Itens anotados aqui **não** são implementados. Escopo = spec.md (§4 do documento do
+produto). Dúvida vira linha nesta lista, não código.
+
+| Data | Item | Origem | Nota |
+|---|---|---|---|
+| 2026-10-26 | Webhook da WhatsApp Cloud API (B10) | spec.md B10 | Só com ordem explícita do usuário e credenciais de teste da Meta |
+| 2026-10-26 | `@fastify/swagger` / OpenAPI gerado | spec.md §1 | Marcado como opcional; `docs/api-contract.md` é o entregável obrigatório (B9) |
+| 2026-10-26 | Testes Playwright do fluxo principal | spec.md §5 (F5) | Opcional, só na Fase F |
+| 2026-10-26 | Exclusão real (hard delete) de usuário ou membership | revisão `architect`, Ruling 12 | A v1 só desliga a membership. As FKs compostas em `NO ACTION` fazem um `DELETE` falhar de propósito; para apagar de verdade é preciso desatribuir os leads no serviço antes |
+| 2026-10-26 | Testes de banco em paralelo (um schema Postgres por arquivo via `search_path`) | revisão `architect`, sugestão 17 | Hoje `fileParallelism: false` deixa a suíte serial. Vale reavaliar quando a suíte passar de ~30s |
+| 2026-10-26 | Recadastrar um lead `lost` que volta meses depois | revisão `architect`, sugestão 21 | `UNIQUE (organization_id, phone)` impede criar um segundo lead com o mesmo telefone. Correto para a v1; a saída seria reabrir o lead existente |
+| 2026-10-26 | Rate limit com store compartilhado (Redis) em vez de memória | Tarefa 4b, Ruling 29 | Com N réplicas o teto efetivo hoje é `100 × N`. Decidir na **B9**, junto com a topologia de deploy |
+| 2026-10-26 | Serializer de log que redija por conteúdo, não por nome de chave | Onda de correção B1, Ruling 35; ampliado pela revisão de segurança, Ruling 42 | O `redact` do Pino é por **nome de chave**: `{a:{b:{token}}}` vaza por profundidade ≥ 2, e `{url:'postgres://zap:senha@h/d'}` vaza **no topo** porque `url` não está na lista. Acrescentar `url`/`connectionString`/`dsn`/`apiKey` só move a fronteira; a saída é um serializer que mascare qualquer valor com `://user:pass@`. **Gatilho: a B10**, que loga payload de webhook. Reconfirmar junto se o Pino/Fastify passar a serializar `err.validation`, que traria valor de corpo submetido |
+| 2026-10-26 | Watchdog no desligamento (`SIGTERM`) | Onda de correção B1, Ruling 35 | Um hook `onClose` travado pendura o processo até o `SIGKILL`. Decidir na **B9** |
+| 2026-10-26 | `loggerDestination` opcional em `BuildAppOptions` | Onda de correção B1, Ruling 35 | Permitiria testar o nível de log (`warn` em 4xx, `error` em 5xx) sem mexer na assinatura pública do `buildApp` só para isso |
+| 2026-10-26 | Isentar `GET /health` do rate limit (`config: { rateLimit: false }`) | Tarefa 5 | Hoje `/health` tem o mesmo teto de 100/min das outras rotas. 100/min é bem acima da frequência normal de uma sonda de liveness, mas um conjunto de sondas atrás de um mesmo IP poderia receber 429. Decidir na **B9** |
+| 2026-10-26 | Configurar `trustProxy` e o `keyGenerator` do rate limit | Tarefa 4b, Ruling 29 | O `keyGenerator` default usa `req.ip`; atrás de um proxy todos os clientes dividiriam um teto único. Decidir na **B9** |
+| 2026-10-26 | Recompilar `packages/contracts` durante `dev:server --watch` | revisão `architect`, sugestão 16 | `dev:server` compila `contracts` uma vez; editar um contrato no meio do watch não recompila. Saída: `tsc -b packages/contracts --watch` em paralelo, ou uma condição de exports `development` apontando para `src` |
+| 2026-10-26 | Qualificar com `public.` a lista `TABELAS_TRUNCAVEIS` de `src/db/seed.ts` | Onda de correção B2, Ruling 45 | O helper de teste já foi qualificado; a lista própria do seed não. Mesma classe de problema (alvo do `TRUNCATE` depender do `search_path`), exposição menor. Fazer junto com a decisão do Ruling 41, que mexe no mesmo trecho |
+| 2026-10-26 | 415 em vez de 400 para `content-type` não suportado | Revisão de segurança, Ruling 43 | `POST` com `text/plain` cai no `VALIDATION_ERROR` 400. Sem vazamento, só status impreciso. Saída: `addContentTypeParser` default que recuse com 415. Decidir na **B9** |
+| 2026-10-26 | CHECK amarrando `completed_at` e `completed_by` em `follow_up_tasks` | Tarefa 10, Ruling 39 | O schema aceita um preenchido sem o outro; hoje só a disciplina do código garante a coerência. **Gatilho: a B3**, junto com a regeneração da migration provisória — ou a **B5**, dona das tarefas de follow-up, se a B3 não regerar |
+| 2026-10-26 | Migrar `app.test.ts`, `security.test.ts`, `health.test.ts` e `error-handler.test.ts` para `buildTestApp()` | Tarefa 9, Ruling 37 | Os quatro ainda chamam `buildApp()` direto, com pool default de 10 e sem `rateLimitMax` alto. **Gatilho: a B4**, quando a contagem de arquivos de teste crescer — aí isso vira 429 aleatório e pressão em `max_connections`. Cuidado: o `security.test.ts` depende de limites próprios e contém o teste de 429 da Tarefa 4b |

@@ -1,0 +1,7 @@
+dist
+apps/server/drizzle
+node_modules
+
+# `spec.md` é o documento-fonte do usuário e não deve ser reformatado; os demais
+# Markdown do projeto (CLAUDE.md, docs/, .claude/) seguem a mesma regra.
+*.md

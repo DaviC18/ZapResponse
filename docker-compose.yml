@@ -1,0 +1,57 @@
+# Postgres local para desenvolvimento e para a suíte de testes.
+#
+# Dois bancos separados de propósito: os testes truncam tabelas, e apontar a suíte para o
+# banco de desenvolvimento destruiria dados reais. A porta 5433 é a do banco de teste.
+#
+# As credenciais são fracas porque isto nunca sai da máquina local; produção usa Neon via
+# DATABASE_URL.
+#
+# Nesta máquina o contexto ativo do Docker é `desktop-linux` e o Docker Desktop não está
+# rodando. Use `docker --context default compose ...` em todos os comandos.
+#
+# A porta do host do banco de desenvolvimento é 5432 por padrão e pode ser trocada com
+# POSTGRES_DEV_PORT (no `.env` local ou no ambiente) quando outro Postgres já ocupa a
+# 5432 na máquina. Ao trocar, ajuste o DATABASE_URL do `.env` para a mesma porta.
+#
+# O volume é montado em /var/lib/postgresql, não em /var/lib/postgresql/data: a imagem
+# postgres:18 guarda os dados em um subdiretório por versão maior e recusa a subir com o
+# mount antigo.
+
+services:
+  postgres-dev:
+    image: postgres:18-alpine
+    container_name: zapresponse-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: zap
+      POSTGRES_PASSWORD: zap
+      POSTGRES_DB: zapresponse
+    ports:
+      - '${POSTGRES_DEV_PORT:-5432}:5432'
+    volumes:
+      - zapresponse_pg_dev:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U zap -d zapresponse']
+      interval: 5s
+      retries: 10
+
+  postgres-test:
+    image: postgres:18-alpine
+    container_name: zapresponse-postgres-test
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: zap
+      POSTGRES_PASSWORD: zap
+      POSTGRES_DB: zapresponse_test
+    ports:
+      - '5433:5432'
+    volumes:
+      - zapresponse_pg_test:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U zap -d zapresponse_test']
+      interval: 5s
+      retries: 10
+
+volumes:
+  zapresponse_pg_dev:
+  zapresponse_pg_test:

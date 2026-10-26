@@ -1,0 +1,11 @@
+node_modules
+dist
+
+# Segredos locais. `.env.example` é o contrato versionado; os demais, nunca.
+.env
+.env.*
+!.env.example
+
+*.tsbuildinfo
+coverage
+.DS_Store
